@@ -25,46 +25,84 @@ def _shannon_entropy(values: np.ndarray, bins: int = 50) -> float:
 def compute_metrics(df: pd.DataFrame, max_period_days: int = 200, smooth: bool = True) -> Dict:
     """Return dict with returns, zscore, FFT spectrum/periods, entropy, froth score, etc."""
     out: Dict = {}
-    close = df["Close"].to_numpy(dtype=float)
 
-    # log returns
-    ret = np.diff(np.log(close), prepend=np.log(close[0]))
+    # Close as clean 1-D float array
+    close_raw = df["Close"].to_numpy()
+    # drop NaNs
+    m = np.isfinite(close_raw)
+    close = close_raw[m].astype(float).reshape(-1)
+
+    # If not enough data, return minimal metrics
+    if close.size < 2:
+        out.update({
+            "returns": np.array([], dtype=float),
+            "zscore": np.array([], dtype=float),
+            "spectrum": np.array([], dtype=float),
+            "periods": np.array([], dtype=float),
+            "dominant_period_days": float("nan"),
+            "entropy_bits": float("nan"),
+            "froth_score": float("nan"),
+            "close": close,
+        })
+        return out
+
+    # --- Returns (use 1-D prepend slice to avoid AxisError) ---
+    log_close = np.log(np.clip(close, 1e-12, None))
+    ret = np.diff(log_close, prepend=log_close[:1])  # prepend has same shape dim
     out["returns"] = ret
+
+    # --- Rolling Z-score on returns ---
     out["zscore"] = _rolling_zscore(ret, window=20)
 
-    # FFT on demeaned close
+    # --- FFT on demeaned close ---
     demean = close - np.nanmean(close)
-    N = len(demean)
-    spec = np.abs(rfft(demean))
-    freqs = rfftfreq(N, d=1.0)
-    with np.errstate(divide='ignore', invalid='ignore'):
-        periods = np.where(freqs > 0, 1.0 / freqs, np.inf)
+    N = demean.size
 
-    mask = periods <= max_period_days
-    spec = spec[mask]
-    periods = periods[mask]
+    if N < 4:
+        # Too short for meaningful FFT
+        out.update({
+            "spectrum": np.array([], dtype=float),
+            "periods": np.array([], dtype=float),
+            "dominant_period_days": float("nan"),
+        })
+    else:
+        spec = np.abs(rfft(demean))
+        freqs = rfftfreq(N, d=1.0)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            periods = np.where(freqs > 0, 1.0 / freqs, np.inf)
 
-    if smooth and spec.size > 5:
-        k = max(3, int(0.01 * len(spec)))
-        if k % 2 == 0: k += 1
-        spec = np.convolve(spec, np.ones(k)/k, mode='same')
+        mask = np.isfinite(periods) & (periods <= max_period_days)
+        spec = spec[mask]
+        periods = periods[mask]
 
-    finite = np.isfinite(periods)
-    dom_period = float(periods[finite][np.argmax(spec[finite])]) if np.any(finite) else float("nan")
+        if smooth and spec.size > 5:
+            k = max(3, int(0.01 * len(spec)))
+            if k % 2 == 0:
+                k += 1
+            spec = np.convolve(spec, np.ones(k)/k, mode='same')
 
-    out["spectrum"] = spec
-    out["periods"] = periods
-    out["dominant_period_days"] = dom_period
-    out["close"] = close
+        if periods.size:
+            dom_period = float(periods[np.argmax(spec)])
+        else:
+            dom_period = float("nan")
 
+        out["spectrum"] = spec
+        out["periods"] = periods
+        out["dominant_period_days"] = dom_period
+
+    # --- Entropy & Froth score ---
     ent = _shannon_entropy(ret, bins=50)
     out["entropy_bits"] = ent
 
-    z_now = np.nan_to_num(out["zscore"][-1], nan=0.0)
+    z_now = np.nan_to_num(out["zscore"][-1] if out["zscore"].size else np.nan, nan=0.0)
     ent_norm = 0.0 if np.isnan(ent) else ent / 6.0
-    cyc_norm = 0.0 if np.isnan(dom_period) else min(dom_period / max_period_days, 1.0)
+    dom = out.get("dominant_period_days", float("nan"))
+    cyc_norm = 0.0 if np.isnan(dom) else min(dom / max_period_days, 1.0)
     out["froth_score"] = float(0.5 * ent_norm + 0.3 * abs(z_now) + 0.2 * cyc_norm)
+
+    out["close"] = close
     return out
+
 
 def make_pdf_report(ticker: str, df: pd.DataFrame, metrics: Dict) -> bytes:
     """Simple 1-page PDF summary."""
