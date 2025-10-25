@@ -118,8 +118,19 @@ with st.sidebar:
     smooth = st.checkbox("Smooth cycle view", value=True, help="Light smoothing for easier reading.")
     compare_list = st.text_area("Compare symbols (comma-separated)", "URA, CCJ, ^GSPC",
                                 help="Used in the Compare tab to show correlations and lead/lag.")
-    universe = st.text_area("Momentum grid symbols", "URA, CCJ, UUUU, ^GSPC, ^NDX, XLE, XLU, GLD, SLV",
-                             help="Symbols shown in the Momentum Grid tab.")
+    market_focus = st.selectbox(
+    "Uranium market focus",
+    ["Exploration & Juniors", "Fuel & Utilities", "ETFs & Macro"],
+    index=2
+)
+
+if market_focus == "Exploration & Juniors":
+    universe = "UUUU, NXE, DNN, UEC, BOE.AX, GLO.TO"
+elif market_focus == "Fuel & Utilities":
+    universe = "CCJ, LEU, KAP.L, AEC.V, BWXT, ^GSPC"
+else:
+    universe = "URA, URNM, ^GSPC, XLE, XLU, GLD, SLV"
+
     run_button = st.button("Run / Refresh", type="primary")
 
 # ---------- data ----------
