@@ -187,7 +187,7 @@ with tab_over:
     c1, c2 = st.columns([1.6, 1.4])
     with c1:
         st.subheader("Price (candles) + Moving Average")
-        st.plotly_chart(candle_chart(df), use_container_width=True)
+    st.plotly_chart(price_with_regimes(df, metrics), use_container_width=True)
     with c2:
         st.subheader("Daily Move Distribution")
         st.plotly_chart(returns_hist(df), use_container_width=True)
