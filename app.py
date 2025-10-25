@@ -15,7 +15,7 @@ from analyzer import compute_metrics, make_pdf_report
 from plotter import price_chart, spectrum_chart, signals_panel
 
 st.set_page_config(page_title="SignalScope", layout="wide")
-st.title("📈 SignalScope — Niche Analytics Dashboard")
+st.title("RehlySignal Analytics")
 
 with st.sidebar:
     st.header("Controls")
