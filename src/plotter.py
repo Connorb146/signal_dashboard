@@ -204,27 +204,54 @@ def xcorr_panel(df_a: pd.DataFrame, df_b: pd.DataFrame, name_a: str, name_b: str
                       title=f"Cross-Correlation {name_a} vs {name_b} (returns)")
     st.plotly_chart(fig, use_container_width=True)
 
-# ---------- heatmap table ----------
 def heatmap_table(uni_data: dict[str, pd.DataFrame]) -> pd.DataFrame | None:
+    def tail_pct_float(s: pd.Series, periods: int) -> float:
+        """Return the last percent change as a float (or np.nan) — never a Series."""
+        try:
+            if not isinstance(s, pd.Series) or s.empty:
+                return np.nan
+            pc = s.pct_change(periods=periods)
+            # grab scalar safely
+            val = pc.iloc[-1] if len(pc) else np.nan
+            # squeeze if some pandas versions hand us a 0-D/1-elem object/Series
+            if isinstance(val, (pd.Series, pd.DataFrame)):
+                val = np.array(val).ravel()[-1]
+            return float(val)
+        except Exception:
+            return np.nan
+
     rows = []
     for t, df in uni_data.items():
-        if df is None or df.empty: 
+        if df is None or df.empty:
             continue
-        s = df.set_index("Date")["Close"].astype(float)
-        r1 = _pct_change(s, 21).iloc[-1] if len(s) > 21 else np.nan
-        r3 = _pct_change(s, 63).iloc[-1] if len(s) > 63 else np.nan
-        r6 = _pct_change(s, 126).iloc[-1] if len(s) > 126 else np.nan
-        r12 = _pct_change(s, 252).iloc[-1] if len(s) > 252 else np.nan
+        if "Date" not in df.columns or "Close" not in df.columns:
+            continue
+
+        s = df.set_index("Date")["Close"]
+        # if some loaders ever return 1-col DataFrame, coerce to Series
+        if isinstance(s, pd.DataFrame):
+            s = s.iloc[:, 0]
+        s = s.astype(float)
+
+        r1  = tail_pct_float(s, 21)   # ~1M
+        r3  = tail_pct_float(s, 63)   # ~3M
+        r6  = tail_pct_float(s, 126)  # ~6M
+        r12 = tail_pct_float(s, 252)  # ~12M
+
         rows.append({
             "Ticker": t,
-            "1M %": None if pd.isna(r1) else round(r1*100, 1),
-            "3M %": None if pd.isna(r3) else round(r3*100, 1),
-            "6M %": None if pd.isna(r6) else round(r6*100, 1),
-            "12M %": None if pd.isna(r12) else round(r12*100, 1),
+            "1M %": None if not np.isfinite(r1)  else round(r1 * 100, 1),
+            "3M %": None if not np.isfinite(r3)  else round(r3 * 100, 1),
+            "6M %": None if not np.isfinite(r6)  else round(r6 * 100, 1),
+            "12M %": None if not np.isfinite(r12) else round(r12 * 100, 1),
         })
+
     if not rows:
         return None
+
     tbl = pd.DataFrame(rows).set_index("Ticker").sort_index()
+    return tbl
+
     # color gradient via pandas Styler is heavy in Streamlit; keep as plain dataframe for speed
     return tbl
 
