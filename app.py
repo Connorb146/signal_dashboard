@@ -17,14 +17,96 @@ from src.plotter import (
 # ---------- page config ----------
 st.set_page_config(page_title="RehlySignal Pro", layout="wide")
 st.markdown(
-    """
-    <style>
-      .block-container {padding-top: 1.0rem; padding-bottom: 2rem; max-width: 1400px;}
-      .stMetric {background: rgba(30,30,30,0.05); border: 1px solid rgba(60,60,60,0.25); border-radius: 12px; padding: 8px;}
-      .stTabs [data-baseweb="tab-list"] { gap: 6px; }
-      .stTabs [data-baseweb="tab"] { padding: 10px 14px; border-radius: 10px; }
-    </style>
-    """,
+   st.markdown("""
+<style>
+/* Global Layout */
+.block-container {
+    padding-top: 0rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
+    background: linear-gradient(135deg, rgba(10,10,15,1) 0%, rgba(25,25,35,1) 100%);
+    color: #F5F5F5;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Header Bar */
+.rehly-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(30,30,40,0.7);
+    border: 1px solid rgba(90,90,120,0.2);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    border-radius: 16px;
+    padding: 1.2rem 1.6rem;
+    margin-bottom: 1.6rem;
+    backdrop-filter: blur(10px);
+}
+.rehly-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #00FFC2;
+    letter-spacing: 0.5px;
+}
+.rehly-subtitle {
+    font-size: 0.9rem;
+    color: #AAAAAA;
+    margin-top: -4px;
+}
+.rehly-logo {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #00FFC2;
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] { gap: 8px; }
+.stTabs [data-baseweb="tab"] {
+    background: rgba(255,255,255,0.05);
+    color: #DDD;
+    border-radius: 10px;
+    padding: 10px 16px;
+    transition: all 0.2s ease;
+}
+.stTabs [data-baseweb="tab"]:hover {
+    background: rgba(255,255,255,0.1);
+    transform: scale(1.02);
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: linear-gradient(90deg,#00FFC2 0%,#00B4D8 100%);
+    color: #0B0B0B !important;
+    font-weight: 700;
+}
+
+/* Metrics & KPIs */
+.stMetric {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 8px;
+    transition: background 0.2s ease;
+}
+.stMetric:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+/* Buttons */
+div.stButton > button:first-child {
+    background: linear-gradient(90deg,#00FFC2 0%,#00B4D8 100%);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+div.stButton > button:first-child:hover {
+    box-shadow: 0 0 12px #00FFC2;
+    transform: scale(1.03);
+}
+</style>
+""", unsafe_allow_html=True)
+
     unsafe_allow_html=True
 )
 
