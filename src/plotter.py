@@ -29,14 +29,24 @@ def _drawdown(series: pd.Series) -> pd.Series:
     dd = series / roll_max - 1.0
     return dd
 
-# ---------- KPI strip ----------
 def kpi_strip(df: pd.DataFrame, metrics: Dict):
     close = df["Close"]
     last = float(close.iloc[-1])
-    chg_1m = _pct_change(close, 21).iloc[-1] * 100 if len(close) > 21 else np.nan
-    chg_3m = _pct_change(close, 63).iloc[-1] * 100 if len(close) > 63 else np.nan
-    chg_1y = _pct_change(close, 252).iloc[-1] * 100 if len(close) > 252 else np.nan
-    froth = metrics.get("froth_score", np.nan)
+
+    def safe_pct(s: pd.Series, periods: int):
+        try:
+            val = s.pct_change(periods=periods).iloc[-1]
+            if isinstance(val, (pd.Series, pd.DataFrame)):
+                val = val.squeeze()
+            return float(val)
+        except Exception:
+            return np.nan
+
+    chg_1m = safe_pct(close, 21) * 100
+    chg_3m = safe_pct(close, 63) * 100
+    chg_1y = safe_pct(close, 252) * 100
+    froth = float(metrics.get("froth_score", np.nan))
+
     cols = st.columns(4)
     cols[0].metric("Last", f"{last:,.2f}")
     cols[1].metric("1M", f"{chg_1m:+.1f}%" if np.isfinite(chg_1m) else "n/a")
