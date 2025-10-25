@@ -39,12 +39,12 @@ with st.sidebar:
     st.header("Controls")
     ticker = st.text_input("Primary ticker", value="URA")
     years_back = st.slider("Years of history", 1, 15, 5)
-    max_period_days = st.slider("Max FFT period (days)", 30, 500, 220)
-    smooth = st.checkbox("Smooth FFT spectrum", value=True)
+    max_period_days = st.slider("Max Cycle Strength period (days)", 30, 500, 220)
+    smooth = st.checkbox("Smooth Cycle Strength spectrum", value=True)
     # compare tickers (comma-separated)
     compare_list = st.text_area("Compare tickers (comma-separated)", "URA, CCJ, ^GSPC")
     # small preset universe for heatmap
-    universe = st.text_area("Heatmap universe (comma-separated)", "URA, CCJ, UUUU, ^GSPC, ^NDX, XLE, XLU, GLD, SLV")
+    universe = st.text_area("Momentum Grid universe (comma-separated)", "URA, CCJ, UUUU, ^GSPC, ^NDX, XLE, XLU, GLD, SLV")
     run_button = st.button("Run / Refresh", type="primary")
 
 # ---------- data cache ----------
@@ -94,7 +94,7 @@ with kpi_col:
 
 # ---------- tabs ----------
 tab_over, tab_cycles, tab_reg, tab_cmp, tab_heat, tab_rep = st.tabs(
-    ["Overview", "Cycles", "Regimes", "Compare", "Heatmap", "Report"]
+    ["Overview", "Cycles", "Regimes", "Compare", "Momentum Grid", "Report"]
 )
 
 # ===== Overview =====
@@ -107,17 +107,17 @@ with tab_over:
         st.subheader("Returns Distribution")
         st.plotly_chart(returns_hist(df), use_container_width=True)
 
-    st.subheader("Signal Snapshot")
+    st.subheader("Market Pulse")
     signals_panel(metrics)
 
 # ===== Cycles =====
 with tab_cycles:
     cc1, cc2 = st.columns([1.7, 1.3])
     with cc1:
-        st.subheader("FFT Spectrum")
+        st.subheader("Cycle Strength")
         st.plotly_chart(spectrum_chart(metrics), use_container_width=True)
     with cc2:
-        st.subheader("Rolling Entropy")
+        st.subheader("Rolling Market Disorder")
         st.plotly_chart(entropy_chart(metrics), use_container_width=True)
 
 # ===== Regimes =====
