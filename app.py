@@ -16,8 +16,7 @@ from src.plotter import (
 
 # ---------- page config ----------
 st.set_page_config(page_title="RehlySignal Pro", layout="wide")
-st.markdown(
-   st.markdown("""
+st.markdown("""
 <style>
 /* Global Layout */
 .block-container {
@@ -107,8 +106,6 @@ div.stButton > button:first-child:hover {
 </style>
 """, unsafe_allow_html=True)
 
-    unsafe_allow_html=True
-)
 
 # ---------- sidebar (plain-English labels) ----------
 with st.sidebar:
