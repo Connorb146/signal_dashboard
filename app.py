@@ -1,4 +1,5 @@
 # app.py — RehlySignal Pro (Investor-Friendly)
+from src.analyzer import compute_metrics, make_pdf_report, generate_ai_summary
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -183,6 +184,19 @@ with tab_over:
     st.subheader("Market Pulse")
     st.caption("Quick read of trend stretch (Overheat/Cooldown), cycle rhythm, and market disorder.")
     signals_panel(metrics)
+    # --- AI summary section ---
+st.markdown("### Market Narrative")
+try:
+    summary = generate_ai_summary(metrics, ticker)
+    st.markdown(f"""
+    <div style='background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px; padding: 1rem; font-size: 1rem; line-height: 1.5;'>
+        {summary}
+    </div>
+    """, unsafe_allow_html=True)
+except Exception as e:
+    st.warning(f"Unable to generate summary: {e}")
+
 
 # ===== Rhythm (Cycles) =====
 with tab_cycles:
