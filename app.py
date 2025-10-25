@@ -138,12 +138,48 @@ with tab_cmp:
     tickers = [t.strip() for t in compare_list.split(",") if t.strip()]
     many = get_many(tickers, years_back)
     # build close price table aligned by date
-    aligned = None
-    for t, d in many.items():
-        if d is None or d.empty: 
-            continue
-        s = d.set_index("Date")["Close"].rename(t)
-        aligned = s if aligned is None else aligned.join(s, how="outer")
+ aligned = None
+series_list = []
+
+for t, d in many.items():
+    if d is None or d.empty:
+        continue
+    if "Date" not in d.columns or "Close" not in d.columns:
+        continue
+
+    # Coerce to a 1-D Series indexed by Date
+    base = d.set_index("Date")["Close"]
+
+    # Some pandas versions may return a DataFrame; squeeze to Series
+    if isinstance(base, pd.DataFrame):
+        base = base.iloc[:, 0]
+
+    s = pd.Series(base.astype(float), name=t)
+
+    series_list.append(s)
+
+if series_list:
+    aligned = pd.concat(series_list, axis=1, join="outer").sort_index()
+
+if aligned is not None and not aligned.empty:
+    aligned = aligned.ffill().dropna(how="all")
+    st.plotly_chart(corr_matrix_chart(aligned), use_container_width=True)
+
+    st.subheader("Pairwise Cross-Correlation (lead/lag)")
+    a1, a2 = st.columns([1, 1])
+    with a1:
+        a = st.selectbox("Series A", options=list(aligned.columns), index=0)
+    with a2:
+        b = st.selectbox("Series B", options=list(aligned.columns), index=min(1, len(aligned.columns) - 1))
+
+    if a in aligned.columns and b in aligned.columns:
+        # Build tiny DataFrames that match the helper's expected shape
+        df_a = aligned[[a]].rename(columns={a: "Close"}).reset_index(names="Date")
+        df_b = aligned[[b]].rename(columns={b: "Close"}).reset_index(names="Date")
+        xcorr_panel(df_a, df_b, a, b)
+else:
+    st.info("Provide 2+ valid tickers in the sidebar to compute correlations.")
+
     if aligned is not None and not aligned.empty:
         aligned = aligned.ffill().dropna(how="all")
         st.plotly_chart(corr_matrix_chart(aligned), use_container_width=True)
