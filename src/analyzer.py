@@ -102,6 +102,61 @@ def compute_metrics(df: pd.DataFrame, max_period_days: int = 200, smooth: bool =
 
     out["close"] = close
     return out
+def generate_ai_summary(metrics: dict, ticker: str) -> str:
+    """Turn numeric metrics into a short human summary."""
+    froth = float(metrics.get("froth_score", np.nan))
+    ent = float(metrics.get("entropy_bits", np.nan))
+    dom = float(metrics.get("dominant_period_days", np.nan))
+    z = metrics.get("zscore", np.array([np.nan]))
+    z_now = float(z[-1]) if isinstance(z, (list, np.ndarray)) and len(z) else np.nan
+
+    lines = []
+
+    # Rhythm / cycle
+    if np.isfinite(dom):
+        if dom < 40:
+            lines.append(f"Short-term rhythm (~{dom:.0f} days) — quick cycles dominate {ticker}.")
+        elif dom < 100:
+            lines.append(f"Medium rhythm (~{dom:.0f} days) — typical swing length for {ticker}.")
+        else:
+            lines.append(f"Long rhythm (~{dom:.0f} days) — slower accumulation/distribution phases.")
+    else:
+        lines.append("Cycle rhythm unclear — data too noisy for consistent pattern.")
+
+    # Disorder
+    if np.isfinite(ent):
+        if ent < 3.5:
+            lines.append("Market disorder low — price action relatively orderly; trends easier to ride.")
+        elif ent < 5.0:
+            lines.append("Market disorder moderate — some choppiness; selective setups.")
+        else:
+            lines.append("Market disorder high — chaotic movement; momentum strategies riskier.")
+    else:
+        lines.append("No valid entropy data for this range.")
+
+    # Z-score interpretation
+    if np.isfinite(z_now):
+        if z_now > 1:
+            lines.append(f"Currently stretched upward (z ≈ {z_now:.2f}) — possible overheat near-term.")
+        elif z_now < -1:
+            lines.append(f"Currently stretched downward (z ≈ {z_now:.2f}) — possible rebound setup.")
+        else:
+            lines.append("Price near equilibrium; neither extended nor compressed.")
+    else:
+        lines.append("Z-score unavailable.")
+
+    # Froth / tension
+    if np.isfinite(froth):
+        if froth > 0.8:
+            lines.append("Tension high — volatility spikes likely; avoid chasing new trends.")
+        elif froth > 0.5:
+            lines.append("Tension moderate — rotation or pause phases likely soon.")
+        else:
+            lines.append("Tension low — environment favors steady trend continuation.")
+    else:
+        lines.append("No tension reading available.")
+
+    return " ".join(lines)
 
 
 def make_pdf_report(ticker: str, df: pd.DataFrame, metrics: Dict) -> bytes:
