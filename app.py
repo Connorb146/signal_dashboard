@@ -136,6 +136,14 @@ with tab_reg:
 with tab_cmp:
     st.subheader("Correlation Matrix")
 
+    # Rebuild inputs INSIDE the tab scope
+    tickers = [t.strip() for t in compare_list.split(",") if t.strip()]
+    if len(tickers) < 2:
+        st.info("Add 2+ tickers in the sidebar (comma-separated) to compare.")
+        st.stop()
+
+    many = get_many(tickers, years_back)
+
     aligned = None
     series_list = []
 
@@ -146,6 +154,7 @@ with tab_cmp:
             continue
 
         base = d.set_index("Date")["Close"]
+        # If some pandas versions yield a DataFrame, squeeze to Series
         if isinstance(base, pd.DataFrame):
             base = base.iloc[:, 0]
 
@@ -171,22 +180,6 @@ with tab_cmp:
             df_a = aligned[[a]].rename(columns={a: "Close"}).reset_index(names="Date")
             df_b = aligned[[b]].rename(columns={b: "Close"}).reset_index(names="Date")
             xcorr_panel(df_a, df_b, a, b)
-    else:
-        st.info("Provide 2+ valid tickers in the sidebar to compute correlations.")
-
-
-    if aligned is not None and not aligned.empty:
-        aligned = aligned.ffill().dropna(how="all")
-        st.plotly_chart(corr_matrix_chart(aligned), use_container_width=True)
-
-        st.subheader("Pairwise Cross-Correlation (lead/lag)")
-        a1, a2 = st.columns([1,1])
-        with a1:
-            a = st.selectbox("Series A", options=tickers, index=0)
-        with a2:
-            b = st.selectbox("Series B", options=tickers, index=min(1, len(tickers)-1))
-        if a in many and b in many and not many[a].empty and not many[b].empty:
-            xcorr_panel(many[a], many[b], a, b)
     else:
         st.info("Provide 2+ valid tickers in the sidebar to compute correlations.")
 
