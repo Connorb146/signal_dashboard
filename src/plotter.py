@@ -102,9 +102,15 @@ def price_with_regimes(df: pd.DataFrame, metrics: Dict):
         ent = pd.Series(ret).rolling(60).apply(lambda x: _entropy_np(x.values))
         ent_norm = (ent - ent.min()) / (ent.max() - ent.min())
         colors = ["rgba(0,255,194," + str(c * 0.3 + 0.1) + ")" for c in ent_norm.fillna(0)]
-        fig.add_trace(go.Bar(x=dates, y=np.nanmax(close) * 0.02,
-                             marker_color=colors, opacity=0.2,
-                             name="Regime shading", hoverinfo="skip"))
+        fig.add_trace(go.Bar(
+    x=dates,
+    y=[float(np.nanmax(close)) * 0.02] * len(dates),  # 2% of max, one bar per date
+    marker_color=colors,                               # same length as dates
+    opacity=0.2,
+    name="Regime shading",
+    hoverinfo="skip"
+))
+
 
     # Price line
     fig.add_trace(go.Scatter(x=dates, y=close, mode="lines", name="Close", line=dict(color="#00FFC2")))
