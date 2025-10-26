@@ -152,12 +152,16 @@ def get_many(tickers: list[str], years_back: int) -> dict[str, pd.DataFrame]:
     return out
 
 # load primary
-if run_button or "df" not in st.session_state:
+# load primary
+if run_button:
+    st.cache_data.clear()  # 🔥 force reload of all cached data when clicking Run
     try:
         st.session_state["df"] = get_data(ticker, years_back)
     except Exception as e:
         st.error(f"Failed to load data: {e}")
         st.stop()
+elif "df" not in st.session_state:
+    st.session_state["df"] = get_data(ticker, years_back)
 
 df = st.session_state.get("df")
 if df is None or df.empty:
