@@ -4,6 +4,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import date, timedelta
+from src.plotter import (
+    kpi_strip, candle_chart, price_chart, returns_hist,
+    spectrum_chart, entropy_chart, rsi_chart, vol_chart,
+    drawdown_chart, signals_panel, corr_matrix_chart,
+    xcorr_panel, heatmap_table
+)
+
 
 # --- path to src (package style) ---
 from src.data_loader import load_prices
