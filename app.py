@@ -127,8 +127,9 @@ elif market_focus == "Fuel & Utilities":
 else:
     universe = "URA, URNM, ^GSPC, XLE, XLU, GLD, SLV"
 
-# <-- move button here (one indent level back)
+# ✅ always visible
 run_button = st.button("Run / Refresh", type="primary")
+
 
 # ---------- data ----------
 @st.cache_data(show_spinner=False, ttl=3600)
