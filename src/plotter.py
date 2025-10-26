@@ -123,6 +123,33 @@ def price_with_regimes(df: pd.DataFrame, metrics: Dict):
     return fig
 
 
+    # Entropy-based background shading (regime coloring)
+    ret = metrics.get("returns", np.array([]))
+    if ret.size >= len(dates):
+        ent = pd.Series(ret).rolling(60).apply(lambda x: _entropy_np(x.values))
+        ent_norm = (ent - ent.min()) / (ent.max() - ent.min())
+        colors = ["rgba(0,255,194," + str(c * 0.3 + 0.1) + ")" for c in ent_norm.fillna(0)]
+        fig.add_trace(go.Bar(x=dates, y=np.nanmax(close) * 0.02,
+                             marker_color=colors, opacity=0.2,
+                             name="Regime shading", hoverinfo="skip"))
+
+    # Price line
+    fig.add_trace(go.Scatter(x=dates, y=close, mode="lines", name="Close", line=dict(color="#00FFC2")))
+
+    # Dominant rhythm overlay (approx sine wave)
+    dom = metrics.get("dominant_period_days", np.nan)
+    if np.isfinite(dom) and dom > 10:
+        phase = np.linspace(0, 2*np.pi*len(dates)/dom, len(dates))
+        wave = np.sin(phase) * (np.std(close) * 0.1) + np.mean(close)
+        fig.add_trace(go.Scatter(x=dates, y=wave, mode="lines",
+                                 name=f"Cycle Overlay (~{dom:.0f} d)", line=dict(color="#FFD700", width=1.5, dash="dot")))
+
+    fig.update_layout(height=420, margin=dict(l=10,r=10,t=30,b=30),
+                      title="Price with Rhythm & Regime Context",
+                      yaxis_title="Price")
+    return fig
+
+
 def returns_hist(df: pd.DataFrame):
     r = np.log(df["Close"]).diff().dropna()
     fig = px.histogram(r, nbins=50, labels={"value":"Daily log return"})
